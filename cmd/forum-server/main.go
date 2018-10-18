@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/ConstaConst/technopark-db-forum-api/postgres"
 	"github.com/ConstaConst/technopark-db-forum-api/restapi"
 	"github.com/ConstaConst/technopark-db-forum-api/restapi/operations"
 	loads "github.com/go-openapi/loads"
@@ -16,6 +17,12 @@ import (
 // Make sure not to overwrite this file after you generated it because all your edits would be lost!
 
 func main() {
+	log.Println("Connecting to DB")
+	dbConn, err := postgres.Connect()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer postgres.Close(dbConn)
 
 	swaggerSpec, err := loads.Embedded(restapi.SwaggerJSON, restapi.FlatSwaggerJSON)
 	if err != nil {

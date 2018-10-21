@@ -12,3 +12,4 @@
 *.out
 
 .idea/
+func_test/

@@ -58,13 +58,13 @@ func (m *User) Validate(formats strfmt.Registry) error {
 
 func (m *User) validateEmail(formats strfmt.Registry) error {
 
-	if err := validate.Required("email", "body", strfmt.Email(m.Email)); err != nil {
-		return err
-	}
-
-	if err := validate.FormatOf("email", "body", "email", m.Email.String(), formats); err != nil {
-		return err
-	}
+	//if err := validate.Required("email", "body", strfmt.Email(m.Email)); err != nil {
+	//	return err
+	//}
+	//
+	//if err := validate.FormatOf("email", "body", "email", m.Email.String(), formats); err != nil {
+	//	return err
+	//}
 
 	return nil
 }

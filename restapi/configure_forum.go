@@ -4,6 +4,8 @@ package restapi
 
 import (
 	"crypto/tls"
+	"github.com/ConstaConst/technopark-db-forum-api/postgres"
+	"log"
 	"net/http"
 
 	errors "github.com/go-openapi/errors"
@@ -34,6 +36,17 @@ func configureAPI(api *operations.ForumAPI) http.Handler {
 	api.BinConsumer = runtime.ByteStreamConsumer()
 
 	api.JSONProducer = runtime.JSONProducer()
+
+	dbConn, err := postgres.MakeDBConn()
+	if err != nil {
+		dbConn.Close()
+		log.Fatalln("Can't create db connection: ", err)
+	}
+	err = dbConn.InitDBTables()
+	if err != nil {
+		dbConn.Close()
+		log.Fatalln("Can't init db tables: ", err)
+	}
 
 	api.ClearHandler = operations.ClearHandlerFunc(func(params operations.ClearParams) middleware.Responder {
 		return middleware.NotImplemented("operation .Clear has not yet been implemented")
@@ -77,15 +90,9 @@ func configureAPI(api *operations.ForumAPI) http.Handler {
 	api.ThreadVoteHandler = operations.ThreadVoteHandlerFunc(func(params operations.ThreadVoteParams) middleware.Responder {
 		return middleware.NotImplemented("operation .ThreadVote has not yet been implemented")
 	})
-	api.UserCreateHandler = operations.UserCreateHandlerFunc(func(params operations.UserCreateParams) middleware.Responder {
-		return middleware.NotImplemented("operation .UserCreate has not yet been implemented")
-	})
-	api.UserGetOneHandler = operations.UserGetOneHandlerFunc(func(params operations.UserGetOneParams) middleware.Responder {
-		return middleware.NotImplemented("operation .UserGetOne has not yet been implemented")
-	})
-	api.UserUpdateHandler = operations.UserUpdateHandlerFunc(func(params operations.UserUpdateParams) middleware.Responder {
-		return middleware.NotImplemented("operation .UserUpdate has not yet been implemented")
-	})
+	api.UserCreateHandler = operations.UserCreateHandlerFunc(dbConn.CreateUser)
+	api.UserGetOneHandler = operations.UserGetOneHandlerFunc(dbConn.GetOneUser)
+	api.UserUpdateHandler = operations.UserUpdateHandlerFunc(dbConn.UpdateUser)
 
 	api.ServerShutdown = func() {}
 

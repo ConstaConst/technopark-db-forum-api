@@ -12,8 +12,8 @@ func (conn *DBConn) CreateThread(params operations.ThreadCreateParams) middlewar
 	tx, _ := conn.pool.Begin()
 	defer tx.Rollback()
 
-	log.Printf("Create Thread. Params: slug=%s, %v\n", params.Slug,
-		params.Thread)
+	log.Printf("Create Thread. Params: in forum=%s, author=%s, slug=%s\n",
+		params.Slug, params.Thread.Author, params.Thread.Slug)
 
 	author, err := getUser(tx, params.Thread.Author)
 	if err != nil {
@@ -25,19 +25,27 @@ func (conn *DBConn) CreateThread(params operations.ThreadCreateParams) middlewar
 			&notFoundUserError)
 	}
 
-	forum, err := getForum(tx, params.Thread.Forum)
+	forum, err := getForum(tx, params.Slug)
 	if err != nil {
 		notFoundForumError := models.Error{Message: fmt.Sprintf(
-			"Can't find forum by slug=%s", params.Thread.Forum)}
+			"Can't find forum by slug=%s", params.Slug)}
 
 		tx.Commit()
 		return operations.NewThreadCreateNotFound().WithPayload(
 			&notFoundForumError)
 	}
 
-	thread, err := getThread(tx, params.Slug)
+	var thread models.Thread
+	var slug *string
+	if params.Thread.Slug != "" {
+		thread, err = getThread(tx, params.Thread.Slug)
+		slug = &params.Thread.Slug
+	} else {
+		thread, err = getThreadByFAT(tx, params.Thread)
+		slug = nil
+	}
 	if err == nil {
-		log.Println("Thred slug=", thread.Slug, "already exists")
+		log.Println("Thread slug=", thread.Slug, "already exists")
 
 		tx.Commit()
 		return operations.NewThreadCreateConflict().WithPayload(&thread)
@@ -56,13 +64,11 @@ func (conn *DBConn) CreateThread(params operations.ThreadCreateParams) middlewar
 	row := tx.QueryRow(`INSERT INTO threads
 					VALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7)
 					RETURNING id`,
-			params.Slug, params.Thread.Title, params.Thread.Message,
+			slug, params.Thread.Title, params.Thread.Message,
 			params.Thread.Author, params.Thread.Forum, created,
 			params.Thread.Votes)
 	err = row.Scan(&params.Thread.ID)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	checkError(err)
 
 	tx.Commit()
 

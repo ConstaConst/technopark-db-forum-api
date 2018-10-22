@@ -2,14 +2,16 @@ package postgres
 
 import (
 	"github.com/ConstaConst/technopark-db-forum-api/models"
+	"github.com/go-openapi/strfmt"
 	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/pgtype"
 	"log"
 	"strconv"
 )
 
-func checkError(err *error) {
+func checkError(err error) {
 	if err != nil {
-		log.Fatalln(err)
+		panic(err)
 	}
 }
 
@@ -51,12 +53,46 @@ func getForum(tx *pgx.Tx, slug string) (models.Forum, error)  {
 	return forum, nil
 }
 
+// How do make identification the thread without slug or id?
+func getThreadByFAT(tx *pgx.Tx, reqThread *models.Thread) (models.Thread,
+	error) {
+	row := tx.QueryRow(`SELECT id, slug, title, message, author, forum,
+								created, votesNumber
+								FROM threads
+								WHERE forum=$1 AND author=$2 AND title=$3`,
+		reqThread.Forum, reqThread.Author, reqThread.Title)
+	thread := models.Thread{}
+	fetchedCreated := pgtype.Timestamptz{}
+	fetchedSlug := pgtype.Text{}
+	err := row.Scan(&thread.ID, &fetchedSlug, &thread.Title, &thread.Message,
+		&thread.Author, &thread.Forum, &fetchedCreated, &thread.Votes)
+	if err != nil {
+		log.Printf("Thread with forum=%s, author=%s, title=%s isn't found: ",
+			reqThread.Forum, reqThread.Author, reqThread.Title)
+		log.Println(err)
+
+		return models.Thread{}, err
+	}
+	t := strfmt.NewDateTime()
+	err = t.Scan(fetchedCreated.Time)
+	checkError(err)
+	thread.Created = &t
+
+	thread.Slug = fetchedSlug.String
+
+	log.Println("Thread=", thread.ID, "is found")
+
+	return thread, nil
+}
+
 func getThread(tx *pgx.Tx, slugOrId string) (models.Thread, error) {
 	var queryType string
 	if _, err := strconv.Atoi(slugOrId); err != nil {
 		queryType = "slug=$1"
+		log.Println("Fetch thread by slug:", slugOrId)
 	} else {
 		queryType = "id=$1::bigint"
+		log.Println("Fetch thread by id:", slugOrId)
 	}
 	row := tx.QueryRow(`SELECT id, slug, title, message, author, forum,
 								created, votesNumber
@@ -64,15 +100,23 @@ func getThread(tx *pgx.Tx, slugOrId string) (models.Thread, error) {
 								WHERE ` + queryType,
 								slugOrId)
 	thread := models.Thread{}
-	err := row.Scan(&thread.ID, &thread.Slug, &thread.Title, &thread.Message,
-		&thread.Author, &thread.Forum, &thread.Created, &thread.Title)
+	fetchedCreated := pgtype.Timestamptz{}
+	fetchedSlug := pgtype.Text{}
+	err := row.Scan(&thread.ID, &fetchedSlug, &thread.Title, &thread.Message,
+		&thread.Author, &thread.Forum, &fetchedCreated, &thread.Votes)
 	if err != nil {
 		log.Println("Thread=", slugOrId, "isn't found.", err)
 
 		return models.Thread{}, err
 	}
+	t := strfmt.NewDateTime()
+	err = t.Scan(fetchedCreated.Time)
+	checkError(err)
+	thread.Created = &t
 
-	log.Println("Forum=", thread.ID, "is found")
+	thread.Slug = fetchedSlug.String
+
+	log.Println("Thread=", thread.ID, "is found")
 
 	return thread, nil
 }

@@ -40,7 +40,7 @@ func (conn *DBConn) CreateUser(
 		params.Profile.Email, params.Profile.About)
 	tx.Commit()
 
-	log.Println("User created")
+	log.Println("User is created")
 
 	params.Profile.Nickname = params.Nickname
 

@@ -51,12 +51,8 @@ func configureAPI(api *operations.ForumAPI) http.Handler {
 	api.ClearHandler = operations.ClearHandlerFunc(func(params operations.ClearParams) middleware.Responder {
 		return middleware.NotImplemented("operation .Clear has not yet been implemented")
 	})
-	api.ForumCreateHandler = operations.ForumCreateHandlerFunc(func(params operations.ForumCreateParams) middleware.Responder {
-		return middleware.NotImplemented("operation .ForumCreate has not yet been implemented")
-	})
-	api.ForumGetOneHandler = operations.ForumGetOneHandlerFunc(func(params operations.ForumGetOneParams) middleware.Responder {
-		return middleware.NotImplemented("operation .ForumGetOne has not yet been implemented")
-	})
+	api.ForumCreateHandler = operations.ForumCreateHandlerFunc(dbConn.CreateForum)
+	api.ForumGetOneHandler = operations.ForumGetOneHandlerFunc(dbConn.GetOneForum)
 	api.ForumGetThreadsHandler = operations.ForumGetThreadsHandlerFunc(func(params operations.ForumGetThreadsParams) middleware.Responder {
 		return middleware.NotImplemented("operation .ForumGetThreads has not yet been implemented")
 	})
@@ -75,9 +71,7 @@ func configureAPI(api *operations.ForumAPI) http.Handler {
 	api.StatusHandler = operations.StatusHandlerFunc(func(params operations.StatusParams) middleware.Responder {
 		return middleware.NotImplemented("operation .Status has not yet been implemented")
 	})
-	api.ThreadCreateHandler = operations.ThreadCreateHandlerFunc(func(params operations.ThreadCreateParams) middleware.Responder {
-		return middleware.NotImplemented("operation .ThreadCreate has not yet been implemented")
-	})
+	api.ThreadCreateHandler = operations.ThreadCreateHandlerFunc(dbConn.CreateThread)
 	api.ThreadGetOneHandler = operations.ThreadGetOneHandlerFunc(func(params operations.ThreadGetOneParams) middleware.Responder {
 		return middleware.NotImplemented("operation .ThreadGetOne has not yet been implemented")
 	})

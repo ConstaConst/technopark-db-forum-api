@@ -68,9 +68,7 @@ func configureAPI(api *operations.ForumAPI) http.Handler {
 		return middleware.NotImplemented("operation .Status has not yet been implemented")
 	})
 	api.ThreadCreateHandler = operations.ThreadCreateHandlerFunc(dbConn.CreateThread)
-	api.ThreadGetOneHandler = operations.ThreadGetOneHandlerFunc(func(params operations.ThreadGetOneParams) middleware.Responder {
-		return middleware.NotImplemented("operation .ThreadGetOne has not yet been implemented")
-	})
+	api.ThreadGetOneHandler = operations.ThreadGetOneHandlerFunc(dbConn.GetOneThread)
 	api.ThreadGetPostsHandler = operations.ThreadGetPostsHandlerFunc(func(params operations.ThreadGetPostsParams) middleware.Responder {
 		return middleware.NotImplemented("operation .ThreadGetPosts has not yet been implemented")
 	})

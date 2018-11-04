@@ -86,6 +86,8 @@ func (conn *DBConn) CreatePosts(
 		posts = append(posts, &post)
 	}
 
+	tx.Commit()
+
 	log.Println("Posts are created:", len(posts))
 
 	return operations.NewPostsCreateCreated().WithPayload(posts)

@@ -77,3 +77,24 @@ func (conn *DBConn) CreateThread(
 
 	return operations.NewThreadCreateCreated().WithPayload(params.Thread)
 }
+
+func (conn *DBConn) GetOneThread(params operations.ThreadGetOneParams) middleware.Responder {
+	tx, _ := conn.pool.Begin()
+	defer tx.Rollback()
+
+	log.Println("Get one thread=", params.SlugOrID)
+
+	thread, err := getThread(tx, params.SlugOrID)
+	if err != nil {
+		notFoundThreadError := models.Error{Message: fmt.Sprintf(
+			"Can't find thread =%s", params.SlugOrID)}
+
+		tx.Rollback()
+		return operations.NewThreadGetOneNotFound().WithPayload(
+			&notFoundThreadError)
+	}
+
+	tx.Commit()
+
+	return operations.NewThreadGetOneOK().WithPayload(&thread)
+}

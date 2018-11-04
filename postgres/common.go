@@ -128,13 +128,19 @@ func getPost(tx *pgx.Tx, id int64) (models.Post, error) {
 								WHERE id = $1`,
 		id)
 	post := models.Post{}
+	fetchedCreated := pgtype.Timestamptz{}
 	err := row.Scan(&post.ID, &post.Author, &post.Message, &post.Forum,
-		&post.Thread, &post.Parent, &post.Created, &post.IsEdited)
+		&post.Thread, &post.Parent, &fetchedCreated, &post.IsEdited)
 	if err != nil {
 		log.Println("Post=", id, "isn't found.", err)
 
 		return models.Post{}, err
 	}
+
+	t := strfmt.NewDateTime()
+	err = t.Scan(fetchedCreated.Time)
+	checkError(err)
+	post.Created = &t
 
 	log.Println("Forum=", post.ID, "is found")
 

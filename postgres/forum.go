@@ -22,7 +22,7 @@ func (conn *DBConn) CreateForum(
 		notFoundUserError := models.Error{Message: fmt.Sprintf(
 			"Can't find user by nickname=%s", params.Forum.User)}
 
-		tx.Commit()
+		tx.Rollback()
 		return operations.NewForumCreateNotFound().WithPayload(
 			&notFoundUserError)
 	}
@@ -31,7 +31,7 @@ func (conn *DBConn) CreateForum(
 	if err == nil {
 		log.Println("Forum slug=", params.Forum.Slug, "already exists")
 
-		tx.Commit()
+		tx.Rollback()
 		return operations.NewForumCreateConflict().WithPayload(&forum)
 	}
 
@@ -48,7 +48,6 @@ func (conn *DBConn) CreateForum(
 	return operations.NewForumCreateCreated().WithPayload(params.Forum)
 }
 
-
 func (conn *DBConn) GetOneForum(
 	params operations.ForumGetOneParams) middleware.Responder {
 	tx, _ := conn.pool.Begin()
@@ -60,7 +59,7 @@ func (conn *DBConn) GetOneForum(
 	if err != nil {
 		log.Println("Forum slug=", params.Slug, "isn't found")
 
-		tx.Commit()
+		tx.Rollback()
 		notFoundForumError := models.Error{Message: fmt.Sprintf(
 			"Can't find forum by slag=%s", params.Slug)}
 		return operations.NewForumGetOneNotFound().WithPayload(
@@ -73,7 +72,6 @@ func (conn *DBConn) GetOneForum(
 	return operations.NewForumGetOneOK().WithPayload(&forum)
 }
 
-
 func (conn *DBConn) GetForumThreads(
 	params operations.ForumGetThreadsParams) middleware.Responder {
 	tx, _ := conn.pool.Begin()
@@ -85,7 +83,7 @@ func (conn *DBConn) GetForumThreads(
 	if err != nil {
 		log.Println("Forum slug=", params.Slug, "isn't found")
 
-		tx.Commit()
+		tx.Rollback()
 		notFoundForumError := models.Error{Message: fmt.Sprintf(
 			"Can't find forum by slag=%s", params.Slug)}
 		return operations.NewForumGetThreadsNotFound().WithPayload(

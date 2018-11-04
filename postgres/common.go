@@ -33,7 +33,7 @@ func getUser(tx *pgx.Tx, nickname string) (models.User, error) {
 	return user, nil
 }
 
-func getForum(tx *pgx.Tx, slug string) (models.Forum, error)  {
+func getForum(tx *pgx.Tx, slug string) (models.Forum, error) {
 	row := tx.QueryRow(`SELECT slug, title, "user", postsnumber, threadsnumber
 								FROM forums
 								WHERE slug = $1`,
@@ -97,8 +97,8 @@ func getThread(tx *pgx.Tx, slugOrId string) (models.Thread, error) {
 	row := tx.QueryRow(`SELECT id, slug, title, message, author, forum,
 								created, votesNumber
 								FROM threads
-								WHERE ` + queryType,
-								slugOrId)
+								WHERE `+queryType,
+		slugOrId)
 	thread := models.Thread{}
 	fetchedCreated := pgtype.Timestamptz{}
 	fetchedSlug := pgtype.Text{}

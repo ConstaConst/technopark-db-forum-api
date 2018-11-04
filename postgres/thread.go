@@ -8,7 +8,8 @@ import (
 	"log"
 )
 
-func (conn *DBConn) CreateThread(params operations.ThreadCreateParams) middleware.Responder {
+func (conn *DBConn) CreateThread(
+	params operations.ThreadCreateParams) middleware.Responder {
 	tx, _ := conn.pool.Begin()
 	defer tx.Rollback()
 
@@ -20,7 +21,7 @@ func (conn *DBConn) CreateThread(params operations.ThreadCreateParams) middlewar
 		notFoundUserError := models.Error{Message: fmt.Sprintf(
 			"Can't find author by nickname=%s", params.Thread.Author)}
 
-		tx.Commit()
+		tx.Rollback()
 		return operations.NewThreadCreateNotFound().WithPayload(
 			&notFoundUserError)
 	}
@@ -30,7 +31,7 @@ func (conn *DBConn) CreateThread(params operations.ThreadCreateParams) middlewar
 		notFoundForumError := models.Error{Message: fmt.Sprintf(
 			"Can't find forum by slug=%s", params.Slug)}
 
-		tx.Commit()
+		tx.Rollback()
 		return operations.NewThreadCreateNotFound().WithPayload(
 			&notFoundForumError)
 	}
@@ -47,7 +48,7 @@ func (conn *DBConn) CreateThread(params operations.ThreadCreateParams) middlewar
 	if err == nil {
 		log.Println("Thread slug=", thread.Slug, "already exists")
 
-		tx.Commit()
+		tx.Rollback()
 		return operations.NewThreadCreateConflict().WithPayload(&thread)
 	}
 
@@ -64,15 +65,15 @@ func (conn *DBConn) CreateThread(params operations.ThreadCreateParams) middlewar
 	row := tx.QueryRow(`INSERT INTO threads
 					VALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7)
 					RETURNING id`,
-			slug, params.Thread.Title, params.Thread.Message,
-			params.Thread.Author, params.Thread.Forum, created,
-			params.Thread.Votes)
+		slug, params.Thread.Title, params.Thread.Message,
+		params.Thread.Author, params.Thread.Forum, created,
+		params.Thread.Votes)
 	err = row.Scan(&params.Thread.ID)
 	checkError(err)
 
 	tx.Commit()
 
-	log.Println("Thread id=", params.Thread.ID , " is created")
+	log.Println("Thread id=", params.Thread.ID, " is created")
 
 	return operations.NewThreadCreateCreated().WithPayload(params.Thread)
 }

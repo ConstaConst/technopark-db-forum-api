@@ -33,9 +33,10 @@ CREATE  TABLE  IF NOT EXISTS  posts (
   message   TEXT                      NOT NULL,
   forum     CITEXT                    NOT NULL  REFERENCES forums (slug),
   thread    BIGINT                    NOT NULL  REFERENCES threads (id),
-  parent    INTEGER,
+  parent    BIGINT                    NOT NULL  DEFAULT 0,
   created   TIMESTAMP WITH TIME ZONE  NOT NULL  DEFAULT NOW(),
-  isEdited  BOOLEAN                   NOT NULL  DEFAULT FALSE
+  isEdited  BOOLEAN                   NOT NULL  DEFAULT FALSE,
+  path      BIGINT []                 NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS votes (

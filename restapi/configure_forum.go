@@ -63,9 +63,7 @@ func configureAPI(api *operations.ForumAPI) http.Handler {
 	api.PostUpdateHandler = operations.PostUpdateHandlerFunc(func(params operations.PostUpdateParams) middleware.Responder {
 		return middleware.NotImplemented("operation .PostUpdate has not yet been implemented")
 	})
-	api.PostsCreateHandler = operations.PostsCreateHandlerFunc(func(params operations.PostsCreateParams) middleware.Responder {
-		return middleware.NotImplemented("operation .PostsCreate has not yet been implemented")
-	})
+	api.PostsCreateHandler = operations.PostsCreateHandlerFunc(dbConn.CreatePosts)
 	api.StatusHandler = operations.StatusHandlerFunc(func(params operations.StatusParams) middleware.Responder {
 		return middleware.NotImplemented("operation .Status has not yet been implemented")
 	})

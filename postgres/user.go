@@ -30,7 +30,7 @@ func (conn *DBConn) CreateUser(
 	if len(existedUsers) != 0 {
 		log.Println("User exists")
 
-		tx.Commit()
+		tx.Rollback()
 		return operations.NewUserCreateConflict().WithPayload(existedUsers)
 	}
 
@@ -66,7 +66,7 @@ func (conn *DBConn) GetOneUser(
 		notFoundUserError := models.Error{Message: fmt.Sprintf(
 			"Can't find user by nickname=%s", params.Nickname)}
 
-		tx.Commit()
+		tx.Rollback()
 		return operations.NewUserGetOneNotFound().WithPayload(
 			&notFoundUserError)
 	}
@@ -101,7 +101,7 @@ func (conn *DBConn) UpdateUser(
 		log.Println("Conflict. Found", userCount, "users with nickname=",
 			params.Nickname, "or email=", params.Profile.Email)
 
-		tx.Commit()
+		tx.Rollback()
 
 		conflictUsersError := models.Error{Message: fmt.Sprintf(
 			"Exist %d users with nickname=%s or email=%s",
@@ -111,6 +111,8 @@ func (conn *DBConn) UpdateUser(
 	}
 	if userCount == 0 {
 		log.Println("User=", params.Nickname, "is'n found.")
+
+		tx.Rollback()
 
 		notFoundUserError := models.Error{Message: fmt.Sprintf(
 			"Can't find user by nickname=%s", params.Nickname)}

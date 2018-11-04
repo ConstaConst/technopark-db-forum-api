@@ -39,9 +39,16 @@ CREATE  TABLE  IF NOT EXISTS  posts (
   path      BIGINT []                 NOT NULL  DEFAULT ARRAY[]::BIGINT[]
 );
 
-CREATE TABLE IF NOT EXISTS votes (
+CREATE  TABLE  IF NOT EXISTS votes (
   nickname  CITEXT   NOT NULL REFERENCES users (nickname),
   thread    BIGINT   NOT NULL REFERENCES threads (id),
   voice     SMALLINT NOT NULL,
   PRIMARY KEY (nickname, thread)
 );
+
+CREATE  TABLE  IF NOT EXISTS service (
+  usersNumber    BIGINT  NOT NULL  DEFAULT 0,
+  forumsNumber   BIGINT  NOT NULL  DEFAULT 0,
+  threadsNumber  BIGINT  NOT NULL  DEFAULT 0,
+  postsNumber    BIGINT  NOT NULL  DEFAULT 0
+)

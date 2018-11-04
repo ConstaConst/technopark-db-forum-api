@@ -35,10 +35,16 @@ func (conn *DBConn) CreateForum(
 		return operations.NewForumCreateConflict().WithPayload(&forum)
 	}
 
-	tx.Exec(`INSERT INTO forums 
+	_, err = tx.Exec(`INSERT INTO forums 
 					VALUES ($1, $2, $3, $4, $5)`,
 		params.Forum.Slug, params.Forum.Title,
 		user.Nickname, params.Forum.Posts, params.Forum.Threads)
+	checkError(err)
+
+	_, err = tx.Exec(
+		"UPDATE service SET forumsNumber=forumsNumber+1")
+	checkError(err)
+
 	tx.Commit()
 
 	params.Forum.User = user.Nickname

@@ -34,10 +34,16 @@ func (conn *DBConn) CreateUser(
 		return operations.NewUserCreateConflict().WithPayload(existedUsers)
 	}
 
-	tx.Exec(`INSERT INTO users 
+	_, err := tx.Exec(`INSERT INTO users 
 					VALUES ($1, $2, $3, $4)`,
 		params.Nickname, params.Profile.Fullname,
 		params.Profile.Email, params.Profile.About)
+	checkError(err)
+
+	_, err = tx.Exec(
+		"UPDATE service SET usersNumber=usersNumber+1")
+	checkError(err)
+
 	tx.Commit()
 
 	log.Println("User is created")

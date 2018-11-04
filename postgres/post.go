@@ -38,7 +38,7 @@ func (conn *DBConn) CreatePosts(
 	}
 
 	var args []interface{}
-	query := "INSERT INTO posts (author, message, forum, thread, parent, path) " +
+	query := "INSERT INTO posts (author, message, forum, thread, parent) " +
 		"VALUES "
 	j := 1
 	for i, post := range params.Posts {
@@ -57,13 +57,13 @@ func (conn *DBConn) CreatePosts(
 			}
 		}
 
-		query += fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,(SELECT path FROM posts WHERE id=$%d)"+
-			"||(SELECT currval('posts_id_seq')))", j, j+1, j+2, j+3, j+4, j+5)
+		query += fmt.Sprintf("($%d,$%d,$%d,$%d,$%d) ",
+			j, j+1, j+2, j+3, j+4)
 		if i < len(params.Posts)-1 {
 			query += ", "
 		}
-		j += 6
-		args = append(args, post.Author, post.Message, thread.Forum, thread.ID, post.Parent, post.Parent)
+		j += 5
+		args = append(args, post.Author, post.Message, thread.Forum, thread.ID, post.Parent)
 	}
 	query += "RETURNING *;"
 
@@ -84,6 +84,13 @@ func (conn *DBConn) CreatePosts(
 		post.Created = &t
 
 		posts = append(posts, &post)
+	}
+
+	for _, post := range posts {
+		_, err = tx.Exec(`UPDATE posts 
+                     SET path=(SELECT path FROM posts WHERE id=$1)||$2 
+                     WHERE id=$2`, post.Parent, post.ID)
+		checkError(err)
 	}
 
 	tx.Commit()

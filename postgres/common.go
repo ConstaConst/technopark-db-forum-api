@@ -142,7 +142,7 @@ func getPost(tx *pgx.Tx, id int64) (models.Post, error) {
 	checkError(err)
 	post.Created = &t
 
-	log.Println("Forum=", post.ID, "is found")
+	log.Println("Post=", post.ID, "is found")
 
 	return post, nil
 }

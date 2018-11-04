@@ -36,7 +36,7 @@ CREATE  TABLE  IF NOT EXISTS  posts (
   parent    BIGINT                    NOT NULL  DEFAULT 0,
   created   TIMESTAMP WITH TIME ZONE  NOT NULL  DEFAULT NOW(),
   isEdited  BOOLEAN                   NOT NULL  DEFAULT FALSE,
-  path      BIGINT []                 NOT NULL
+  path      BIGINT []                 NOT NULL  DEFAULT ARRAY[]::BIGINT[]
 );
 
 CREATE TABLE IF NOT EXISTS votes (

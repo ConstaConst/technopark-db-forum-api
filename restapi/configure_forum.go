@@ -77,9 +77,7 @@ func configureAPI(api *operations.ForumAPI) http.Handler {
 	api.ThreadUpdateHandler = operations.ThreadUpdateHandlerFunc(func(params operations.ThreadUpdateParams) middleware.Responder {
 		return middleware.NotImplemented("operation .ThreadUpdate has not yet been implemented")
 	})
-	api.ThreadVoteHandler = operations.ThreadVoteHandlerFunc(func(params operations.ThreadVoteParams) middleware.Responder {
-		return middleware.NotImplemented("operation .ThreadVote has not yet been implemented")
-	})
+	api.ThreadVoteHandler = operations.ThreadVoteHandlerFunc(dbConn.ThreadVote)
 	api.UserCreateHandler = operations.UserCreateHandlerFunc(dbConn.CreateUser)
 	api.UserGetOneHandler = operations.UserGetOneHandlerFunc(dbConn.GetOneUser)
 	api.UserUpdateHandler = operations.UserUpdateHandlerFunc(dbConn.UpdateUser)

@@ -140,3 +140,24 @@ func getPost(tx *pgx.Tx, id int64) (models.Post, error) {
 
 	return post, nil
 }
+
+func getVote(tx *pgx.Tx, nickname string, thread int32) (models.Vote, error) {
+	row := tx.QueryRow(`SELECT nickname, voice
+                             FROM votes
+                             WHERE nickname=$1 AND thread=$2`,
+		nickname, thread)
+
+	vote := models.Vote{}
+	err := row.Scan(&vote.Nickname, &vote.Voice)
+	if err != nil {
+		log.Println("Voice nickname=", nickname, "thread=", thread,
+			"isn't found")
+
+		return models.Vote{}, err
+	}
+
+	log.Println("Voice nickname=", nickname, "thread=", thread,
+		"is found and =", vote.Voice)
+
+	return vote, nil
+}

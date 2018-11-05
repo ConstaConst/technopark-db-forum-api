@@ -28,6 +28,18 @@ func (conn *DBConn) ThreadVote(
 		return operations.NewThreadVoteNotFound().WithPayload(
 			&notFoundThreadError)
 	}
+	_, err = getUser(tx, params.Vote.Nickname)
+	if err != nil {
+		tx.Rollback()
+
+		log.Println("Can't find user id=", params.Vote.Nickname)
+
+		notFoundUserError := models.Error{Message: fmt.Sprintf(
+			"Can't find user id=%s", params.Vote.Nickname)}
+
+		return operations.NewThreadVoteNotFound().WithPayload(
+			&notFoundUserError)
+	}
 
 	oldVote, err := getVote(tx, params.Vote.Nickname, thread.ID)
 	var deltaVoice int32

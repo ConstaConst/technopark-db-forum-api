@@ -19,12 +19,6 @@ func (conn *DBConn) CreatePosts(
 	log.Printf("Create Posts. Params: in thread=%s, posts count=%d\n",
 		params.SlugOrID, len(params.Posts))
 
-	if len(params.Posts) == 0 {
-		log.Println("Nothing to insert")
-
-		return operations.NewPostsCreateCreated().WithPayload(models.Posts{})
-	}
-
 	thread, err := getThread(tx, params.SlugOrID)
 	if err != nil {
 		tx.Rollback()
@@ -38,14 +32,19 @@ func (conn *DBConn) CreatePosts(
 			&notFoundThreadError)
 	}
 
+	if len(params.Posts) == 0 {
+		log.Println("Nothing to insert")
+
+		return operations.NewPostsCreateCreated().WithPayload(models.Posts{})
+	}
+
 	var args []interface{}
 	query := "INSERT INTO posts (author, message, forum, thread, parent) " +
 		"VALUES "
 	j := 1
 	for i, post := range params.Posts {
 		if post.Parent != 0 {
-
-			_, err = getPost(tx, post.Parent)
+			parent, err := getPost(tx, post.Parent)
 			if err != nil {
 				tx.Rollback()
 
@@ -56,6 +55,29 @@ func (conn *DBConn) CreatePosts(
 				return operations.NewPostsCreateConflict().WithPayload(
 					&notFoundParentError)
 			}
+			if parent.Thread != thread.ID {
+				tx.Rollback()
+
+				log.Printf("Parent thread=%d and post thread=%d are different",
+					parent.Thread, thread.ID)
+
+				diffThreadParentError := models.Error{Message: fmt.Sprintf(
+					"Parent thread=%d and post thread=%d are different",
+					parent.Thread, thread.ID)}
+				return operations.NewPostsCreateConflict().WithPayload(
+					&diffThreadParentError)
+			}
+		}
+		_, err = getUser(tx, post.Author)
+		if err != nil {
+			tx.Rollback()
+
+			log.Println("Can't find post author:", post.Author)
+
+			notFoundUserError := models.Error{Message: fmt.Sprintf(
+				"Can't find post user=%s", post.Author)}
+			return operations.NewPostsCreateNotFound().WithPayload(
+				&notFoundUserError)
 		}
 
 		query += fmt.Sprintf("($%d,$%d,$%d,$%d,$%d) ",
@@ -67,6 +89,9 @@ func (conn *DBConn) CreatePosts(
 		args = append(args, post.Author, post.Message, thread.Forum, thread.ID, post.Parent)
 	}
 	query += "RETURNING *;"
+
+	log.Println("QUERY: ", query)
+	log.Println("ARGS: ", args)
 
 	rows, err := tx.Query(query, args...)
 	checkError(err)
@@ -86,6 +111,7 @@ func (conn *DBConn) CreatePosts(
 
 		posts = append(posts, &post)
 	}
+	log.Println(posts)
 
 	for _, post := range posts {
 		_, err = tx.Exec(`UPDATE posts 
@@ -328,4 +354,94 @@ func getRootPosts(tx *pgx.Tx, params *operations.ThreadGetPostsParams, thread in
 	}
 
 	return roots, nil
+}
+
+func (conn *DBConn) GetOnePost(
+	params operations.PostGetOneParams) middleware.Responder {
+	tx, _ := conn.pool.Begin()
+	defer tx.Rollback()
+
+	log.Printf("Get one post id=%d", params.ID)
+	log.Println("Related: ", params.Related)
+
+	var postFull models.PostFull
+
+	post, err := getPost(tx, params.ID)
+	if err != nil {
+		tx.Rollback()
+
+		log.Println("Post id=", params.ID, "isn't found")
+
+		notFoundPostError := models.Error{Message: fmt.Sprintf(
+			"Can't find post id=%d", params.ID)}
+
+		return operations.NewPostGetOneNotFound().WithPayload(
+			&notFoundPostError)
+	}
+	postFull.Post = &post
+
+	for _, param := range params.Related {
+		switch param {
+		case "user":
+			author, _ := getUser(tx, post.Author)
+			postFull.Author = &author
+		case "forum":
+			forum, _ := getForum(tx, post.Forum)
+			postFull.Forum = &forum
+		case "thread":
+			thread, _ := getThread(tx, fmt.Sprintf("%d", post.Thread))
+			postFull.Thread = &thread
+		}
+	}
+
+	tx.Commit()
+
+	log.Println("Post id=", params.ID, "is found")
+
+	return operations.NewPostGetOneOK().WithPayload(&postFull)
+}
+
+func (conn *DBConn) UpdatePost(
+	params operations.PostUpdateParams) middleware.Responder {
+	tx, _ := conn.pool.Begin()
+	defer tx.Rollback()
+
+	log.Println("Update post id=", params.ID)
+
+	post, err := getPost(tx, params.ID)
+	if err != nil {
+		tx.Rollback()
+
+		log.Println("Post id=", params.ID, "isn't found")
+
+		notFoundPostError := models.Error{Message: fmt.Sprintf(
+			"Can't find post id=%d", params.ID)}
+
+		return operations.NewPostUpdateNotFound().WithPayload(
+			&notFoundPostError)
+	}
+
+	if params.Post.Message == "" {
+		log.Println("New message is empty, post isn't updated")
+
+		return operations.NewPostUpdateOK().WithPayload(&post)
+	}
+	if params.Post.Message == post.Message {
+		log.Println("New message is same, post isn't updated")
+
+		return operations.NewPostUpdateOK().WithPayload(&post)
+	}
+
+	_, err = tx.Exec("UPDATE posts SET message=$1, isEdited=true WHERE id=$2",
+		params.Post.Message, params.ID)
+	checkError(err)
+
+	tx.Commit()
+
+	log.Println("Post id=", params.ID, "is updated")
+
+	post.Message = params.Post.Message
+	post.IsEdited = true
+
+	return operations.NewPostUpdateOK().WithPayload(&post)
 }

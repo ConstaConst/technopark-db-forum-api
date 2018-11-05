@@ -8,11 +8,9 @@ import (
 	"log"
 	"net/http"
 
-	errors "github.com/go-openapi/errors"
-	runtime "github.com/go-openapi/runtime"
-	middleware "github.com/go-openapi/runtime/middleware"
-
 	"github.com/ConstaConst/technopark-db-forum-api/restapi/operations"
+	"github.com/go-openapi/errors"
+	"github.com/go-openapi/runtime"
 )
 
 //go:generate swagger generate server --target .. --name  --spec ../swagger.yml
@@ -48,23 +46,15 @@ func configureAPI(api *operations.ForumAPI) http.Handler {
 		log.Fatalln("Can't init db tables: ", err)
 	}
 
-	api.ClearHandler = operations.ClearHandlerFunc(func(params operations.ClearParams) middleware.Responder {
-		return middleware.NotImplemented("operation .Clear has not yet been implemented")
-	})
+	api.ClearHandler = operations.ClearHandlerFunc(dbConn.ClearService)
 	api.ForumCreateHandler = operations.ForumCreateHandlerFunc(dbConn.CreateForum)
 	api.ForumGetOneHandler = operations.ForumGetOneHandlerFunc(dbConn.GetOneForum)
 	api.ForumGetThreadsHandler = operations.ForumGetThreadsHandlerFunc(dbConn.GetForumThreads)
 	api.ForumGetUsersHandler = operations.ForumGetUsersHandlerFunc(dbConn.GetForumUsers)
-	api.PostGetOneHandler = operations.PostGetOneHandlerFunc(func(params operations.PostGetOneParams) middleware.Responder {
-		return middleware.NotImplemented("operation .PostGetOne has not yet been implemented")
-	})
-	api.PostUpdateHandler = operations.PostUpdateHandlerFunc(func(params operations.PostUpdateParams) middleware.Responder {
-		return middleware.NotImplemented("operation .PostUpdate has not yet been implemented")
-	})
+	api.PostGetOneHandler = operations.PostGetOneHandlerFunc(dbConn.GetOnePost)
+	api.PostUpdateHandler = operations.PostUpdateHandlerFunc(dbConn.UpdatePost)
 	api.PostsCreateHandler = operations.PostsCreateHandlerFunc(dbConn.CreatePosts)
-	api.StatusHandler = operations.StatusHandlerFunc(func(params operations.StatusParams) middleware.Responder {
-		return middleware.NotImplemented("operation .Status has not yet been implemented")
-	})
+	api.StatusHandler = operations.StatusHandlerFunc(dbConn.ShowStatus)
 	api.ThreadCreateHandler = operations.ThreadCreateHandlerFunc(dbConn.CreateThread)
 	api.ThreadGetOneHandler = operations.ThreadGetOneHandlerFunc(dbConn.GetOneThread)
 	api.ThreadGetPostsHandler = operations.ThreadGetPostsHandlerFunc(dbConn.GetPosts)

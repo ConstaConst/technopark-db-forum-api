@@ -46,6 +46,7 @@ func (conn *DBConn) InitDBTables() error {
 	if err != nil {
 		return err
 	}
+	conn.UpdateStatus()
 
 	return nil
 }

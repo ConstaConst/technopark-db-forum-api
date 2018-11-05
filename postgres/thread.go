@@ -138,8 +138,11 @@ func (conn *DBConn) UpdateThread(
 
 	if params.Thread.Title != "" {
 		args = append(args, params.Thread.Title)
-		query += fmt.Sprintf("title=$%d, ", len(args))
+		query += fmt.Sprintf("title=$%d ", len(args))
 		thread.Title = params.Thread.Title
+		if params.Thread.Message != "" {
+			query += ", "
+		}
 	}
 	if params.Thread.Message != "" {
 		args = append(args, params.Thread.Message)
@@ -149,6 +152,9 @@ func (conn *DBConn) UpdateThread(
 
 	args = append(args, thread.ID)
 	query += fmt.Sprintf("WHERE id=$%d", len(args))
+
+	log.Println("QUERY: ", query)
+	log.Println("ARGS: ", args)
 
 	_, err = tx.Exec(query, args...)
 	checkError(err)

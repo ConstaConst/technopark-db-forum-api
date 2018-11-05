@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"github.com/jackc/pgx"
-	"io/ioutil"
 	"log"
 	"strconv"
 )
@@ -15,9 +14,9 @@ func MakeDBConn() (DBConn, error) {
 	var pgxConfig = pgx.ConnConfig{
 		Host:     "localhost",
 		Port:     5432,
-		Database: "forum_api",
-		User:     "forum_api",
-		Password: "q",
+		Database: "docker",
+		User:     "docker",
+		Password: "docker",
 	}
 
 	pool, err := pgx.NewConnPool(
@@ -36,20 +35,20 @@ func MakeDBConn() (DBConn, error) {
 	return DBConn{pool}, nil
 }
 
-func (conn *DBConn) InitDBTables() error {
-	initSql, err := ioutil.ReadFile("postgres/init.sql")
-	if err != nil {
-		return err
-	}
-
-	_, err = conn.pool.Exec(string(initSql))
-	if err != nil {
-		return err
-	}
-	conn.UpdateStatus()
-
-	return nil
-}
+//func (conn *DBConn) InitDBTables() error {
+//	initSql, err := ioutil.ReadFile("postgres/init.sql")
+//	if err != nil {
+//		return err
+//	}
+//
+//	_, err = conn.pool.Exec(string(initSql))
+//	if err != nil {
+//		return err
+//	}
+//	conn.UpdateStatus()
+//
+//	return nil
+//}
 
 func (conn *DBConn) Close() {
 	conn.pool.Close()

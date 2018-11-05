@@ -58,3 +58,5 @@ CREATE  TABLE  IF NOT EXISTS service (
   threadsNumber  BIGINT  NOT NULL  DEFAULT 0,
   postsNumber    BIGINT  NOT NULL  DEFAULT 0
 );
+
+INSERT INTO service VALUES (0, 0, 0, 0);

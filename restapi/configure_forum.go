@@ -40,11 +40,6 @@ func configureAPI(api *operations.ForumAPI) http.Handler {
 		dbConn.Close()
 		log.Fatalln("Can't create db connection: ", err)
 	}
-	err = dbConn.InitDBTables()
-	if err != nil {
-		dbConn.Close()
-		log.Fatalln("Can't init db tables: ", err)
-	}
 
 	api.ClearHandler = operations.ClearHandlerFunc(dbConn.ClearService)
 	api.ForumCreateHandler = operations.ForumCreateHandlerFunc(dbConn.CreateForum)

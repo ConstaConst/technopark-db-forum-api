@@ -15,11 +15,20 @@ func (conn *DBConn) ShowStatus(
 	log.Println("Service status")
 
 	row := tx.QueryRow(`SELECT usersNumber, forumsNumber, threadsNumber, postsNumber
-                             FROM service
-                             LIMIT 1`)
+                            FROM service`)
 
 	var service models.Status
 	row.Scan(&service.User, &service.Forum, &service.Thread, &service.Post)
+
+	//var service models.Status
+	//row := tx.QueryRow("SELECT COUNT(*) FROM users")
+	//row.Scan(&service.User)
+	//row = tx.QueryRow("SELECT COUNT(*) FROM threads")
+	//row.Scan(&service.Thread)
+	//row = tx.QueryRow("SELECT COUNT(*) FROM forums")
+	//row.Scan(&service.Forum)
+	//row = tx.QueryRow("SELECT COUNT(*) FROM posts")
+	//row.Scan(&service.Post)
 
 	tx.Commit()
 

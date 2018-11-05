@@ -92,6 +92,12 @@
   version = "v0.17.0"
 
 [[projects]]
+  name = "github.com/jackc/pgx"
+  packages = [".","chunkreader","internal/sanitize","pgio","pgproto3","pgtype"]
+  revision = "89f1e6ac7276b61d885db5e5aed6fcbedd1c7e31"
+  version = "v3.2.0"
+
+[[projects]]
   name = "github.com/jessevdk/go-flags"
   packages = ["."]
   revision = "c6ca198ec95c841fdb89fc0de7496fed11ab854e"
@@ -108,6 +114,12 @@
   packages = ["."]
   revision = "3536a929edddb9a5b34bd6861dc4a9647cb459fe"
   version = "v1.1.2"
+
+[[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   branch = "master"
@@ -130,6 +142,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0422773de6c71f612a30e6dc78987ebd29cf4b7c96664926a966ce589e6452f2"
+  inputs-digest = "34d17f4e4a8506682a2f64dd1424ae04066b56f13b5cd5cc0ab4730c1b34e4d6"
   solver-name = "gps-cdcl"
   solver-version = 1

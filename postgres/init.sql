@@ -2,7 +2,7 @@ CREATE  EXTENSION  IF NOT EXISTS  citext;
 
 
 CREATE TABLE IF NOT EXISTS users (
-  nickname  CITEXT                       NOT NULL PRIMARY KEY,
+  nickname  CITEXT  COLLATE ucs_basic    NOT NULL PRIMARY KEY,
   fullname  VARCHAR(255)                 NOT NULL,
   email     CITEXT                       NOT NULL UNIQUE,
   about     TEXT                         NOT NULL DEFAULT ''
@@ -14,6 +14,12 @@ CREATE  TABLE  IF NOT EXISTS  forums (
   "user"         CITEXT        NOT NULL  REFERENCES users (nickname),
   postsNumber    INTEGER       NOT NULL  DEFAULT 0,
   threadsNumber  INTEGER       NOT NULL  DEFAULT 0
+);
+
+CREATE  TABLE  IF NOT EXISTS  users_in_forums (
+  forum     CITEXT  COLLATE ucs_basic  NOT NULL,
+  nickname  CITEXT                     NOT NULL,
+  primary key (forum, nickname)
 );
 
 CREATE  TABLE  IF NOT EXISTS  threads (
@@ -51,4 +57,5 @@ CREATE  TABLE  IF NOT EXISTS service (
   forumsNumber   BIGINT  NOT NULL  DEFAULT 0,
   threadsNumber  BIGINT  NOT NULL  DEFAULT 0,
   postsNumber    BIGINT  NOT NULL  DEFAULT 0
-)
+);
+INSERT INTO service VALUES (0, 0, 0, 0);

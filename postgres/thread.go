@@ -71,10 +71,15 @@ func (conn *DBConn) CreateThread(
 	err = row.Scan(&params.Thread.ID)
 	checkError(err)
 
-	_, err = tx.Exec("UPDATE forums SET threadsNumber=threadsNumber+1 WHERE slug=$1", forum.Slug)
+	_, err = tx.Exec("UPDATE forums SET threadsNumber=threadsNumber+1 WHERE slug=$1",
+		forum.Slug)
 	checkError(err)
 	_, err = tx.Exec("UPDATE service SET threadsNumber=threadsNumber+1")
 	checkError(err)
+
+	_, err = tx.Exec("INSERT INTO users_in_forums (forum, nickname) VALUES ($1, $2)"+
+		" ON CONFLICT (forum, nickname) DO NOTHING",
+		forum.Slug, params.Thread.Author)
 
 	tx.Commit()
 

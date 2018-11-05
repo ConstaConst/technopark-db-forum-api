@@ -102,6 +102,17 @@ func (conn *DBConn) CreatePosts(
 		"UPDATE service SET postsNumber=postsNumber+$1", len(posts))
 	checkError(err)
 
+	users := make(map[string]bool)
+	for _, post := range posts {
+		users[post.Author] = true
+	}
+	for user := range users {
+		_, err = tx.Exec("INSERT INTO users_in_forums (forum, nickname) VALUES ($1, $2) "+
+			"ON CONFLICT (forum, nickname) DO NOTHING",
+			thread.Forum, user)
+		checkError(err)
+	}
+
 	tx.Commit()
 
 	log.Println("Posts are created:", len(posts))

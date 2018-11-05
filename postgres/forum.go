@@ -144,3 +144,63 @@ func (conn *DBConn) GetForumThreads(
 
 	return operations.NewForumGetThreadsOK().WithPayload(threads)
 }
+
+func (conn *DBConn) GetForumUsers(
+	params operations.ForumGetUsersParams) middleware.Responder {
+	tx, _ := conn.pool.Begin()
+	defer tx.Rollback()
+
+	log.Printf("Get Forum Users. Params: %s\n", params.Slug)
+
+	_, err := getForum(tx, params.Slug)
+	if err != nil {
+		log.Println("Forum slug=", params.Slug, "isn't found")
+
+		tx.Rollback()
+		notFoundForumError := models.Error{Message: fmt.Sprintf(
+			"Can't find forum by slag=%s", params.Slug)}
+		return operations.NewForumGetUsersNotFound().WithPayload(
+			&notFoundForumError)
+	}
+
+	var args []interface{}
+	query := "SELECT u.nickname, fullname, email, about " +
+		"FROM users u INNER JOIN users_in_forums uf ON  u.nickname=uf.nickname " +
+		"WHERE forum = $1 "
+	args = append(args, params.Slug)
+
+	if params.Since != nil {
+		args = append(args, params.Since)
+		if params.Desc != nil && *params.Desc {
+			query += fmt.Sprintf("AND u.nickname < $%d ", len(args))
+		} else {
+			query += fmt.Sprintf("AND u.nickname > $%d ", len(args))
+		}
+	}
+
+	query += "ORDER BY u.nickname "
+	if params.Desc != nil && *params.Desc {
+		query += "DESC "
+	}
+
+	if params.Limit != nil {
+		args = append(args, *params.Limit)
+		query += fmt.Sprintf("LIMIT $%d ", len(args))
+	}
+
+	rows, err := tx.Query(query, args...)
+	checkError(err)
+
+	users := models.Users{}
+	for rows.Next() {
+		user := models.User{}
+		err = rows.Scan(&user.Nickname, &user.Fullname, &user.Email, &user.About)
+		checkError(err)
+
+		users = append(users, &user)
+	}
+
+	log.Println("Users are fetched:", len(users))
+
+	return operations.NewForumGetUsersOK().WithPayload(users)
+}
